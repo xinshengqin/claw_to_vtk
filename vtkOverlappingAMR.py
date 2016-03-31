@@ -177,12 +177,12 @@ class vtkAMRBox(object):
 
     def get_global_boundary_index(self, global_origin):
         relative_pos = self.origin - global_origin
-        i_low = int(relative_pos[0]/self.spacing[0])
-        j_low = int(relative_pos[1]/self.spacing[1])
-        k_low = int(relative_pos[2]/self.spacing[2])
+        i_low = int(round(relative_pos[0]/self.spacing[0]))  #round to nearest int
+        j_low = int(round(relative_pos[1]/self.spacing[1]))
+        k_low = int(round(relative_pos[2]/self.spacing[2]))
 
         i_high = i_low + self.ndim[0] - 2  # todo: figure out why it is -2
-        j_high = j_low + self.ndim[1] - 2
+        j_high = j_low + self.ndim[1] - 2  # ndim is num of nodes
         k_high = k_low + self.ndim[2] - 2
         # pdb.set_trace()
 

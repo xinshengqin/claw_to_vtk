@@ -1,14 +1,19 @@
+#!/usr/bin/python
 from vtkOverlappingAMR import *
 import numpy as np
 from clawpack.pyclaw import Solution
 import pdb
+import sys
+import os
 
-def convert_claw_to_vtk(frame, input_path, output_name):
-    sol = Solution(frame, path=input_path, file_format='ascii')
+
+def convert_claw_to_vtk(frame, input_path, output_name, input_format):
+    sol = Solution(frame, path=input_path, file_format=input_format)
     global_origin = sol.state.patch.lower_global  # base patch
     global_origin.append(0.0)  # append z
     global_origin = np.array(global_origin)
-    levels = [state.patch.level-1 for state in sol.states]  # shift base level to 0
+    levels = [state.patch.level-1 for state in sol.states]
+    # shift base level to 0
     level_count = {}
     level_spacing = {}  # spacing of each level
     for i, level in enumerate(levels):
@@ -17,7 +22,7 @@ def convert_claw_to_vtk(frame, input_path, output_name):
         else:
             level_count[level] = 1
             spacing = sol.states[i].patch.delta
-            spacing.append(1.0)  # dz
+            spacing.append(spacing[0])  # dz = dx
             spacing = np.array(spacing)
             level_spacing[level] = spacing
     num_levels = len(level_count.keys())
@@ -49,15 +54,15 @@ def convert_claw_to_vtk(frame, input_path, output_name):
             amrbox = vtkAMRBox(origin, ndim)
 
             q = states_sorted[local_index].get_q_global()
-            q1 = q[0, ...]
-            q2 = q[1, ...]
-            q3 = q[2, ...]
-            q1 = q1.transpose()
-            q2 = q2.transpose()
-            q3 = q3.transpose()
-            amrbox.set_cell_data(q1, "q1")
-            amrbox.set_cell_data(q2, "q2")
-            amrbox.set_cell_data(q3, "q3")
+            for i in range(q.shape[0]):
+                q_i = q[i, ...]
+                q_i = q_i.transpose()
+                amrbox.set_cell_data(q_i, "q_"+str(i))
+
+            # set vtkGhostType data
+            # ghost_q = np.zeros(q[0, ...].shape, dtype=int)
+            # ghost_q = ghost_q.transpose()
+            # amrbox.set_cell_data(ghost_q, "vtkGhostType", data_type="UInt8")
 
             # shape = list(q1.shape)
             # shape.append(1)
@@ -70,8 +75,20 @@ def convert_claw_to_vtk(frame, input_path, output_name):
     AMRdata.write_ascii(output_name+str(frame))
 
 
-num_frames = 21
-input_path = '../acoustics_2d_radial/_output'
-for frame in range(num_frames):
-    convert_claw_to_vtk(frame, input_path, 'acoustic_2d_')
+def main(argv):
+    input_path = '_output'
+    output_dir = "vtk_output"
 
+    if output_dir not in os.listdir('./'):
+        os.mkdir(output_dir)
+    os.chdir(output_dir)
+    input_path = '../'+input_path
+
+    assert((len(argv) == 3)), \
+        "usage: python convert_all_frames.py <input format> <first frame> <last frame>"
+    for frame in range(int(argv[1]), int(argv[2])):
+        convert_claw_to_vtk(frame, input_path, 'acoustic_2d_', argv[0])
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

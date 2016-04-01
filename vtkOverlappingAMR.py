@@ -1,5 +1,6 @@
 import numpy as np
 import pdb
+import os
 #  This file defines several classes of vtk structures
 
 
@@ -14,8 +15,10 @@ class vtkOverlappingAMR(object):
         """
         self.xml_version = "1.0"
         self.vtk_file_type_version = "1.1"
+        # self.vtk_file_type_version = "0.1"
         self.byte_order = "LittleEndian"
         self.header_type = "UInt32"
+        # self.header_type = "UInt64"
         self.compressor = "vtkZLibDataCompressor"
         self.grid_description = "XY"  # todo: this is just for 2d grid
         assert(isinstance(origin, np.ndarray)), \
@@ -68,7 +71,7 @@ class vtkOverlappingAMR(object):
         op_file.close()
         for i in range(self.num_levels):
             # pdb.set_trace()
-            self.blocks[i].write_root_file(filename)  # todo: implement this
+            self.blocks[i].write_root_file(filename)
         op_file = open(filename + '.vthb', 'a')
         op_file.write('  </vtkOverlappingAMR>\n')
         op_file.write('</VTKFile>')
@@ -142,15 +145,21 @@ class vtkAMRBox(object):
         self.ndim = ndim  # (nx, ny, nz) - number of nodes
         self.spacing = None  # (dx, dy, dz)
 
-        self.point_data = []
         self.cell_data = []
         self.cell_data_name = []
+        self.cell_data_type = []
+
+        self.point_data = []
         self.point_data_name = []
 
         self.xml_version = "1.0"
-        self.vtk_file_type_version = "2.0"
+        # self.vtk_file_type_version = "0.1"
+        self.vtk_file_type_version = "1.0"
+        # self.vtk_file_type_version = "1.1"
+        # self.vtk_file_type_version = "2.0"
         self.byte_order = "LittleEndian"
         self.header_type = "UInt32"
+        # self.header_type = "UInt64"
         self.compressor = "vtkZLibDataCompressor"
 
     def set_spacing(self, spacing):
@@ -168,12 +177,14 @@ class vtkAMRBox(object):
         self.point_data.append(data)
         self.point_data_name.append(name)
 
-    def set_cell_data(self, data, name):
+    def set_cell_data(self, data, name, data_type="Float64"):
         if not isinstance(data, np.ndarray):
             raise TypeError
         assert(isinstance(name, str)), "name must be a str."
+        assert(isinstance(data_type, str)), "data_type must be a str."
         self.cell_data.append(data)
         self.cell_data_name.append(name)
+        self.cell_data_type.append(data_type)
 
     def get_global_boundary_index(self, global_origin):
         relative_pos = self.origin - global_origin
@@ -250,8 +261,10 @@ class vtkAMRBox(object):
         op_file.write('    </PointData>\n')
         op_file.write('    <CellData>\n')
         if len(self.cell_data) != 0:  # write cell data
-            for data_name, cell_data in zip(self.cell_data_name, self.cell_data):
-                op_file.write('      <DataArray type=\"Float64\" Name=\"' +
+            for data_name, cell_data, data_type in \
+                zip(self.cell_data_name, self.cell_data, self.cell_data_type):
+                op_file.write('      <DataArray type=\"' + 
+                              data_type + '\" Name=\"' +
                               data_name + '\" ' +
                               'format=\"ascii\" RangeMin=\"' +
                               str(cell_data.min()) + '\" ' +

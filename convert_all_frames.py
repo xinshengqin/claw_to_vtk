@@ -5,10 +5,14 @@ from clawpack.pyclaw import Solution
 import pdb
 import sys
 import os
+from claw_find_overlapped import *
 
 
 def convert_claw_to_vtk(frame, input_path, output_name, input_format):
+    assert(isinstance(frame,int))
     sol = Solution(frame, path=input_path, file_format=input_format)
+    set_overlapped_status(sol)
+
     global_origin = sol.state.patch.lower_global  # base patch
     global_origin.append(0.0)  # append z
     global_origin = np.array(global_origin)
@@ -53,11 +57,14 @@ def convert_claw_to_vtk(frame, input_path, output_name, input_format):
             ndim = ndim + 1  # ndim should be num of nodes
             amrbox = vtkAMRBox(origin, ndim)
 
-            q = states_sorted[local_index].get_q_global()
-            for i in range(q.shape[0]):
+            q = states_sorted[local_index].q
+            for i in range(q.shape[0]-1):
                 q_i = q[i, ...]
                 q_i = q_i.transpose()
                 amrbox.set_cell_data(q_i, "q_"+str(i))
+            q_ol = q[-1, ...]  # last piece is used to mark overlapped cells
+            q_ol = q_ol.transpose()
+            amrbox.set_cell_data(q_ol, "vtkGhostType", "UInt8")
 
             # set vtkGhostType data
             # ghost_q = np.zeros(q[0, ...].shape, dtype=int)

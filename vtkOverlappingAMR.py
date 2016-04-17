@@ -275,7 +275,10 @@ class vtkAMRBox(object):
                     if (i%6 == 0) and (i != 0):  # write every 6 numbers in a line
                         op_file.write('\n')
                         op_file.write('       ')
-                    op_file.write(str(item) + ' ')
+                    if ("Int" in data_type):  #we should write data as integer
+                        op_file.write(str(int(item)) + ' ')
+                    else:
+                        op_file.write(str(item) + ' ')
                 op_file.write('\n')
                 op_file.write('      </DataArray>\n')
         op_file.write('    </CellData>\n')

@@ -1,15 +1,30 @@
 #!/usr/bin/python
-from vtkOverlappingAMR import *
-import numpy as np
+
+# Author: Xinsheng (Shawn) Qin
+# date: 03/2016
+
+from vtkOverlappingAMR import vtkOverlappingAMR
+from vtkOverlappingAMR import vtkAMRBlock, vtkAMRBox
 from clawpack.pyclaw import Solution
-import pdb
+from claw_find_overlapped import set_overlapped_status
 import sys
 import os
-from claw_find_overlapped import *
+import numpy as np
 
 
 def convert_claw_to_vtk(frame, input_path, output_name, input_format):
-    assert(isinstance(frame,int))
+    """
+    convert output of clawpack to VTK format
+    VTK data will be output to input_path+"_vtk"
+
+    Args:
+        frame (int): frame number of the clawpack output file
+        input_path (string): output directory of clawpack.
+                             It's usually "_output".
+        output_name: File name of output VTK files in input_path.
+        input_format: format of clawpack output file: binary or ascii.
+    """
+    assert(isinstance(frame, int))
     sol = Solution(frame, path=input_path, file_format=input_format)
     set_overlapped_status(sol)
 
@@ -17,7 +32,8 @@ def convert_claw_to_vtk(frame, input_path, output_name, input_format):
     global_origin.append(0.0)  # append z
     global_origin = np.array(global_origin)
     levels = [state.patch.level-1 for state in sol.states]
-    # shift base level to 0
+    # shift base level to 0, since the base level in clawpack
+    # is 1 while the base level in VTK is 0
     level_count = {}
     level_spacing = {}  # spacing of each level
     for i, level in enumerate(levels):
@@ -31,7 +47,7 @@ def convert_claw_to_vtk(frame, input_path, output_name, input_format):
             level_spacing[level] = spacing
     num_levels = len(level_count.keys())
 
-# a list of num of patches at each level
+    # a list of num of patches at each level
     box_per_level = [item[1] for item in
                      sorted(level_count.items(),
                             key=lambda a: a[0])]
@@ -83,19 +99,30 @@ def convert_claw_to_vtk(frame, input_path, output_name, input_format):
 
 
 def main(argv):
-    input_path = '_output'
-    output_dir = "vtk_output"
+    if (len(argv) == 4):
+        input_path = argv[1]
+        output_dir = input_path+"_vtk"
+        output_name = "claw"
 
-    if output_dir not in os.listdir('./'):
-        os.mkdir(output_dir)
-    os.chdir(output_dir)
-    input_path = '../'+input_path
+        if (output_dir not in os.listdir('./') and
+                input_path in os.listdir('./')):
+            os.mkdir(output_dir)
+        os.chdir(output_dir)
+        input_path = '../'+input_path
 
-    assert((len(argv) == 3)), \
-        "usage: python convert_all_frames.py <input format> <first frame> <last frame>"
-    for frame in range(int(argv[1]), int(argv[2])):
-        convert_claw_to_vtk(frame, input_path, 'acoustic_2d_', argv[0])
-
+        for frame in range(int(argv[2]), int(argv[3])):
+            convert_claw_to_vtk(frame, input_path, output_name+'_', argv[0])
+    else:
+        print(
+              "---------------------------------------------------------\n" +
+              "Input Error!\n\n" +
+              "USAGE: \n\npython convert_all_frames.py <input format> " +
+              "<input path> <first frame> <last frame>\n\n" +
+              "<input path> is usually _output for clawpack.\n" +
+              "<input format> should be either ascii or binary.\n" +
+              "Example: python convert_all_frames.py ascii _output 1 20\n"
+              "---------------------------------------------------------\n"
+             )
 
 if __name__ == "__main__":
     main(sys.argv[1:])

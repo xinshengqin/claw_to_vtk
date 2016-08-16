@@ -10,7 +10,8 @@ def set_overlapped_status(sol):
     @param sol: Solution obejct of pyclaw that contains all information
                 of this time step.
     @rtype:     list
-    @return:    a list that contains overlapped status of each patch
+    @return:    add a component to the solution q,
+                which contains overlapped status of each patch
 
     """
     levels = [state.patch.level-1 for state in sol.states]
@@ -26,9 +27,9 @@ def set_overlapped_status(sol):
             spacing.append(spacing[0])  # dz = dx
             spacing = np.array(spacing)
             level_spacing[level] = spacing
-    num_levels = len(level_count.keys())
+    # num_levels = len(level_count.keys())
 
-# a list of num of patches at each level
+    # a list of num of patches at each level
     box_per_level = [item[1] for item in
                      sorted(level_count.items(),
                             key=lambda a: a[0])]
@@ -36,28 +37,33 @@ def set_overlapped_status(sol):
 
     """
     @type level_count:       dictionary
-    @variable level_count:   a dictionary that maps levels to number of patches of certain levels
+    @variable level_count:   a dictionary that maps levels
+                             to number of patches of certain levels
                              e.g. {0:1, 1:2, 2:12}
     @type num_levels:        int
     @variable num_levels:    number of levels in total
     @type box_per_level:     list
-    @variable box_per_level: [number of patches on level 0, number of patches on level1, ...]
+    @variable box_per_level: [number of patches on level 0,
+                              number of patches on level1, ...]
     """
     for state in sol.states:
         level = state.patch.level-1
         xlower_coarse = state.patch.dimensions[0].lower
-        xupper_coarse = state.patch.dimensions[0].upper
+        # xupper_coarse = state.patch.dimensions[0].upper
         ylower_coarse = state.patch.dimensions[1].lower
-        yupper_coarse = state.patch.dimensions[1].upper
+        # yupper_coarse = state.patch.dimensions[1].upper
         dx = state.patch.delta[0]
         dy = state.patch.delta[1]
         nx = state.patch.num_cells_global[0]
         ny = state.patch.num_cells_global[1]
-        # in overlapped_status, entry with value 0 denotes that the cell is not overlapped
+        # in overlapped_status, entry with value 0 denotes
+        # that the cell is not overlapped
         # entry with value 8 denotes that the cell is overlapped
         overlapped_status = np.zeros((1, state.q.shape[1], state.q.shape[2]))
-        # overlapped_status = overlapped_status.transpose(0, 2, 1)  # convert from Fortran-Style to C-style
-        # In the future, efficiency of this part can be improved by mapping grid levels to
+        # convert from Fortran-Style to C-style
+        # overlapped_status = overlapped_status.transpose(0, 2, 1)
+        # In the future, efficiency of this part can be improved
+        # by mapping grid levels to
         # a list of states of corresponding levels.
         # Otherwise, we need to scan each states in each outer loop as below
         for state_fine in sol.states:

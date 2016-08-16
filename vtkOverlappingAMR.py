@@ -1,7 +1,7 @@
 import numpy as np
-import pdb
-import os
-#  This file defines several classes of vtk structures
+"""
+This module defines several classes of vtk structures
+"""
 
 
 class vtkOverlappingAMR(object):
@@ -115,18 +115,22 @@ class vtkAMRBlock(object):
             os.mkdir(filename)
         for i in range(self.nbox):
             # pdb.set_trace()
-            boundary_index = self.boxes[i].get_global_boundary_index(self.global_origin)
-            child_path = filename + '/' + filename + '_' + str(self.level) + '_' + str(i) + '.vti'
-            op_file.write('      <DataSet index=\"' + str(i) + '\" amr_box=\"' +
-                           str(boundary_index[0]) + ' ' +
-                           str(boundary_index[1]) + ' ' +
-                           str(boundary_index[2]) + ' ' +
-                           str(boundary_index[3]) + ' ' +
-                           str(boundary_index[4]) + ' ' +
-                           str(boundary_index[5]) + 
-                           '\" file=\"' + child_path + '\">\n')
+            boundary_index = self.boxes[i].get_global_boundary_index(
+                             self.global_origin)
+            child_path = filename + '/' + filename + \
+                '_' + str(self.level) + '_' + str(i) + '.vti'
+            op_file.write('      <DataSet index=\"' +
+                          str(i) + '\" amr_box=\"' +
+                          str(boundary_index[0]) + ' ' +
+                          str(boundary_index[1]) + ' ' +
+                          str(boundary_index[2]) + ' ' +
+                          str(boundary_index[3]) + ' ' +
+                          str(boundary_index[4]) + ' ' +
+                          str(boundary_index[5]) +
+                          '\" file=\"' + child_path + '\">\n')
             op_file.write('      </DataSet>\n')
-            self.boxes[i].write_child_ascii(child_path) # write data in children directory
+            # write data in children directory
+            self.boxes[i].write_child_ascii(child_path)
         op_file.write('    </Block>\n')
         op_file.close()
 
@@ -188,7 +192,8 @@ class vtkAMRBox(object):
 
     def get_global_boundary_index(self, global_origin):
         relative_pos = self.origin - global_origin
-        i_low = int(round(relative_pos[0]/self.spacing[0]))  #round to nearest int
+        # round to nearest int
+        i_low = int(round(relative_pos[0]/self.spacing[0]))
         j_low = int(round(relative_pos[1]/self.spacing[1]))
         k_low = int(round(relative_pos[2]/self.spacing[2]))
 
@@ -226,24 +231,25 @@ class vtkAMRBox(object):
                       str(extent[3]) + ' ' +
                       str(extent[4]) + ' ' +
                       str(extent[5]) + '\" ' +
-                      'Origin=\"' + 
+                      'Origin=\"' +
                       str(self.origin[0]) + ' ' +
                       str(self.origin[1]) + ' ' +
-                      str(self.origin[2]) +  
+                      str(self.origin[2]) +
                       '\" Spacing=\"' +
-                      str(self.spacing[0]) + ' '+
-                      str(self.spacing[1]) + ' '+
+                      str(self.spacing[0]) + ' ' +
+                      str(self.spacing[1]) + ' ' +
                       str(self.spacing[2]) + '\">\n')
-        op_file.write('  <Piece Extent=\"'+
+        op_file.write('  <Piece Extent=\"' +
                       str(extent[0]) + ' ' +
                       str(extent[1]) + ' ' +
                       str(extent[2]) + ' ' +
                       str(extent[3]) + ' ' +
                       str(extent[4]) + ' ' +
-                      str(extent[5]) + '\">\n') 
+                      str(extent[5]) + '\">\n')
         op_file.write('    <PointData>\n')
         if len(self.point_data) != 0:  # write point data
-            for data_name, point_data in zip(self.point_data_name, self.point_data):
+            for data_name, point_data in zip(self.point_data_name,
+                                             self.point_data):
                 op_file.write('      <DataArray type=\"Float64\" Name=\"' +
                               data_name + '\" ' +
                               'format=\"ascii\" RangeMin=\"' +
@@ -251,8 +257,9 @@ class vtkAMRBox(object):
                               'RangeMax=\"' + str(point_data.max()) + '\">\n')
                 data_flat = point_data.flatten()
                 op_file.write('       ')
-                for i,item in enumerate(data_flat):
-                    if (i%6 == 0) and (i != 0):  # write every 6 numbers in a line
+                for i, item in enumerate(data_flat):
+                    # write every 6 numbers in a line
+                    if (i % 6 == 0) and (i != 0):
                         op_file.write('\n')
                         op_file.write('       ')
                     op_file.write(str(item) + ' ')
@@ -262,8 +269,12 @@ class vtkAMRBox(object):
         op_file.write('    <CellData>\n')
         if len(self.cell_data) != 0:  # write cell data
             for data_name, cell_data, data_type in \
-                zip(self.cell_data_name, self.cell_data, self.cell_data_type):
-                op_file.write('      <DataArray type=\"' + 
+                    zip(
+                        self.cell_data_name,
+                        self.cell_data,
+                        self.cell_data_type
+                       ):
+                op_file.write('      <DataArray type=\"' +
                               data_type + '\" Name=\"' +
                               data_name + '\" ' +
                               'format=\"ascii\" RangeMin=\"' +
@@ -271,11 +282,13 @@ class vtkAMRBox(object):
                               'RangeMax=\"' + str(cell_data.max()) + '\">\n')
                 data_flat = cell_data.flatten()
                 op_file.write('       ')
-                for i,item in enumerate(data_flat):
-                    if (i%6 == 0) and (i != 0):  # write every 6 numbers in a line
+                for i, item in enumerate(data_flat):
+                    # write every 6 numbers in a line
+                    if (i % 6 == 0) and (i != 0):
                         op_file.write('\n')
                         op_file.write('       ')
-                    if ("Int" in data_type):  #we should write data as integer
+                    # we should write data as integer
+                    if ("Int" in data_type):
                         op_file.write(str(int(item)) + ' ')
                     else:
                         op_file.write(str(item) + ' ')
@@ -286,6 +299,3 @@ class vtkAMRBox(object):
         op_file.write('  </ImageData>\n')
         op_file.write('</VTKFile>')
         op_file.close()
-
-
-

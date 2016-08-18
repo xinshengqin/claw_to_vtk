@@ -18,7 +18,9 @@
 
 5. Convert clawpack output to VTK format (will write VTK files in \_output\_vtk):
 
-        python convert_all_frames.py ascii _output 1 10 
+   In clawpack case directory, run:
+
+        convert_all_frames.py ascii _output 1 10 
 
 
 6. Open paraview and read *.vthb files in \_output\_vtk

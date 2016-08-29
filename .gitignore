@@ -1,1 +1,7 @@
 *.vthb
+*.out
+*.log
+*.exe
+*.o
+*.pyc
+*.ipynb
